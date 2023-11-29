@@ -52,7 +52,7 @@ def base64pickle(value):
         retVal = encodeBase64(pickle.dumps(value, PICKLE_PROTOCOL), binary=False)
     except:
         warnMsg = "problem occurred while serializing "
-        warnMsg += "instance of a type '%s'" % type(value)
+        warnMsg += f"instance of a type '{type(value)}'"
         singleTimeWarnMessage(warnMsg)
 
         try:
@@ -365,7 +365,7 @@ def getUnicode(value, encoding=None, noneToNull=False):
         except UnicodeDecodeError:
             return six.text_type(value, UNICODE_ENCODING, errors="reversible")
     elif isListLike(value):
-        value = list(getUnicode(_, encoding, noneToNull) for _ in value)
+        value = [getUnicode(_, encoding, noneToNull) for _ in value]
         return value
     else:
         try:
@@ -405,11 +405,9 @@ def stdoutEncode(value):
 
     if IS_WIN and IS_TTY and kb.get("codePage", -1) is None:
         output = shellExec("chcp")
-        match = re.search(r": (\d{3,})", output or "")
-
-        if match:
+        if match := re.search(r": (\d{3,})", output or ""):
             try:
-                candidate = "cp%s" % match.group(1)
+                candidate = f"cp{match.group(1)}"
                 codecs.lookup(candidate)
             except LookupError:
                 pass
@@ -429,7 +427,7 @@ def stdoutEncode(value):
                 value = value[:ex.start] + "?" * (ex.end - ex.start) + value[ex.end:]
 
                 warnMsg = "cannot properly display (some) Unicode characters "
-                warnMsg += "inside your terminal ('%s') environment. All " % encoding
+                warnMsg += f"inside your terminal ('{encoding}') environment. All "
                 warnMsg += "unhandled occurrences will result in "
                 warnMsg += "replacement with '?' character. Please, find "
                 warnMsg += "proper character representation inside "
@@ -454,9 +452,8 @@ def getConsoleLength(value):
     4
     """
 
-    if isinstance(value, six.text_type):
-        retVal = sum((2 if ord(_) >= 0x3000 else 1) for _ in value)
-    else:
-        retVal = len(value)
-
-    return retVal
+    return (
+        sum((2 if ord(_) >= 0x3000 else 1) for _ in value)
+        if isinstance(value, six.text_type)
+        else len(value)
+    )
